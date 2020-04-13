@@ -1,7 +1,7 @@
 build/
-data/
+/data/
 cmake-build-debug/
-Vocabulary/
+/Vocabulary/
 Thirdparty/DBoW2/build/
 Thirdparty/g2o/build/
 
