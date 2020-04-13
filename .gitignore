@@ -1,14 +1,7 @@
-<<<<<<< HEAD
-build
-/data/*
+/build/
+data/
 cmake-build-debug/
-/Vocabulary/*
-=======
-build/
-/data/
-cmake-build-debug/
-/Vocabulary/
->>>>>>> dd5fc920585d0ac4249c8974ee6db63a420148b0
+Vocabulary/
 Thirdparty/DBoW2/build/
 Thirdparty/g2o/build/
-
+segnet_config/
