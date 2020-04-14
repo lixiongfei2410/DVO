@@ -41,13 +41,24 @@ find_package(Eigen3 3.1.0 REQUIRED)
 find_package(Pangolin REQUIRED)
 find_package(Caffe REQUIRED)
 
+find_package(Boost 1.55.0 REQUIRED COMPONENTS system filesystem)
+
+
+#  出现 boost 未定义的解决办法,不知道出错原因,估计和cuda相关
+#include_directories(untitled ${Boost_INCLUDE_DIRS})
+#link_directories(untitled ${Boost_LIBRARY_DIRS})
+#target_link_libraries(untitled ${Boost_LIBRARIES})
+
+
+
 include_directories(
-${PROJECT_SOURCE_DIR}
-${PROJECT_SOURCE_DIR}/include
-${PROJECT_SOURCE_DIR}/include/segnet
-${Caffe_INCLUDE_DIRS}
-${EIGEN3_INCLUDE_DIR}
-${Pangolin_INCLUDE_DIRS}
+         ${Boost_INCLUDE_DIRS}
+         ${PROJECT_SOURCE_DIR}
+         ${PROJECT_SOURCE_DIR}/include
+         ${PROJECT_SOURCE_DIR}/include/segnet
+         ${Caffe_INCLUDE_DIRS}
+         ${EIGEN3_INCLUDE_DIR}
+         ${Pangolin_INCLUDE_DIRS}
 )
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
@@ -104,7 +115,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/Stereo)
 
 add_executable(stereo_kitti
 Examples/Stereo/stereo_kitti.cc)
-target_link_libraries(stereo_kitti ${PROJECT_NAME})
+target_link_libraries(stereo_kitti ${PROJECT_NAME} ${Boost_LIBRARIES})
 
 #add_executable(stereo_euroc
 #Examples/Stereo/stereo_euroc.cc)

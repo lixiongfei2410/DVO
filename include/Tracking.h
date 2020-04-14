@@ -37,6 +37,7 @@
 #include "Initializer.h"
 #include "MapDrawer.h"
 #include "System.h"
+#include "bayesian_segnet.hpp"
 
 #include <mutex>
 
@@ -56,6 +57,19 @@ class Tracking
 public:
     Tracking(System* pSys, ORBVocabulary* pVoc, FrameDrawer* pFrameDrawer, MapDrawer* pMapDrawer, Map* pMap,
              KeyFrameDatabase* pKFDB, const string &strSettingPath, const int sensor);
+
+    // 重载 for DVO
+    Tracking(System *pSys,
+             ORBVocabulary *pVoc,
+             FrameDrawer *pFrameDrawer,
+             MapDrawer *pMapDrawer,
+             Map *pMap,
+             KeyFrameDatabase *pKFDB,
+             BayesianSegNet *pBayesianSegNet,
+             const std::string &strSettingPath,
+             const int sensor);
+
+
 
     // Preprocess the input and call Track(). Extract features and performs stereo matching.
     cv::Mat GrabImageStereo(const cv::Mat &imRectLeft,const cv::Mat &imRectRight, const double &timestamp);
@@ -161,6 +175,11 @@ protected:
     //BoW
     ORBVocabulary* mpORBVocabulary;
     KeyFrameDatabase* mpKeyFrameDB;
+
+
+    // Bayesian SegNet for image semantic segmentation
+    BayesianSegNet *mpBayesianSegNet;
+
 
     // Initalization (only for monocular)
     Initializer* mpInitializer;

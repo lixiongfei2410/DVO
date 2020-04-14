@@ -18,6 +18,11 @@
 * along with ORB-SLAM2. If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <unistd.h>
+#include <cstdio>
+#include <cstdlib>
+
+
 #include "Viewer.h"
 #include <pangolin/pangolin.h>
 
@@ -26,9 +31,20 @@
 namespace ORB_SLAM2
 {
 
-Viewer::Viewer(System* pSystem, FrameDrawer *pFrameDrawer, MapDrawer *pMapDrawer, Tracking *pTracking, const string &strSettingPath):
-    mpSystem(pSystem), mpFrameDrawer(pFrameDrawer),mpMapDrawer(pMapDrawer), mpTracker(pTracking),
-    mbFinishRequested(false), mbFinished(true), mbStopped(true), mbStopRequested(false)
+Viewer::Viewer(System* pSystem,
+               FrameDrawer *pFrameDrawer,
+               MapDrawer *pMapDrawer,
+               Tracking *pTracking,
+               const string &strSettingPath,
+               const cv::Size &input_geometry):
+         mpSystem(pSystem),
+         mpFrameDrawer(pFrameDrawer),
+         mpMapDrawer(pMapDrawer),
+         mpTracker(pTracking),
+         mbFinishRequested(false),
+         mbFinished(true),
+         mbStopped(true),
+         mbStopRequested(false)
 {
     cv::FileStorage fSettings(strSettingPath, cv::FileStorage::READ);
 
@@ -37,8 +53,21 @@ Viewer::Viewer(System* pSystem, FrameDrawer *pFrameDrawer, MapDrawer *pMapDrawer
         fps=30;
     mT = 1e3/fps;
 
-    mImageWidth = fSettings["Camera.width"];
-    mImageHeight = fSettings["Camera.height"];
+    /**
+    * @author: lxf
+    * @date:   20-4-14 上午10:55
+    * @description:
+    * @param:
+    * @return
+    */
+
+
+    // mImageWidth = fSettings["Camera.width"];
+   //  mImageHeight = fSettings["Camera.height"];
+
+    mImageWidth = static_cast<float>(input_geometry.width);
+    mImageHeight = static_cast<float>(input_geometry.height);
+
     if(mImageWidth<1 || mImageHeight<1)
     {
         mImageWidth = 640;
@@ -65,7 +94,8 @@ void Viewer::Run()
     glEnable (GL_BLEND);
     glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    pangolin::CreatePanel("menu").SetBounds(0.0,1.0,0.0,pangolin::Attach::Pix(175));
+    pangolin::CreatePanel("menu").SetBounds(
+            0.0,1.0,0.0,pangolin::Attach::Pix(175));
     pangolin::Var<bool> menuFollowCamera("menu.Follow Camera",true,true);
     pangolin::Var<bool> menuShowPoints("menu.Show Points",true,true);
     pangolin::Var<bool> menuShowKeyFrames("menu.Show KeyFrames",true,true);

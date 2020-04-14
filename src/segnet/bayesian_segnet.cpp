@@ -34,7 +34,6 @@
 
 
 
-
 double computeEntropy(const double probability) {
     if (probability == 0) {
         return 0;

@@ -18,7 +18,9 @@
 * along with ORB-SLAM2. If not, see <http://www.gnu.org/licenses/>.
 */
 
-
+#include <cstdio>
+#include <cstdlib>
+#include <unistd.h>
 
 #include "System.h"
 #include "Converter.h"
@@ -26,12 +28,22 @@
 #include <pangolin/pangolin.h>
 #include <iomanip>
 
+
+
 namespace ORB_SLAM2
 {
 
-System::System(const string &strVocFile, const string &strSettingsFile, const eSensor sensor,
-               const bool bUseViewer):mSensor(sensor), mpViewer(static_cast<Viewer*>(NULL)), mbReset(false),mbActivateLocalizationMode(false),
-        mbDeactivateLocalizationMode(false)
+System::System(const string &strVocFile,
+               const string &strSettingsFile,
+               const string &strPrototxtFile,
+               const string &strWeightsFile,
+               const eSensor sensor,
+               const bool bUseViewer):
+                                mSensor(sensor),
+                               mpViewer(static_cast<Viewer*>(NULL)),
+                               mbReset(false),
+                               mbActivateLocalizationMode(false),
+                               mbDeactivateLocalizationMode(false)
 {
     // Output welcome message
     cout << endl <<
@@ -48,6 +60,12 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
         cout << "Stereo" << endl;
     else if(mSensor==RGBD)
         cout << "RGB-D" << endl;
+
+    if(mSensor != STEREO){
+        std::cerr << "Sensor mode must be Stereo!" << std::endl;
+        exit(-1);
+    }
+
 
     //Check settings file
     cv::FileStorage fsSettings(strSettingsFile.c_str(), cv::FileStorage::READ);
@@ -71,6 +89,8 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     }
     cout << "Vocabulary loaded!" << endl << endl;
 
+
+
     //Create KeyFrame Database
     mpKeyFrameDatabase = new KeyFrameDatabase(*mpVocabulary);
 
@@ -83,24 +103,52 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
 
     //Initialize the Tracking thread
     //(it will live in the main thread of execution, the one that called this constructor)
-    mpTracker = new Tracking(this, mpVocabulary, mpFrameDrawer, mpMapDrawer,
-                             mpMap, mpKeyFrameDatabase, strSettingsFile, mSensor);
+    mpTracker = new Tracking(this,
+                             mpVocabulary,
+                             mpFrameDrawer,
+                             mpMapDrawer,
+                             mpMap,
+                             mpKeyFrameDatabase,
+                             mpBayesianSegNet,
+                             strSettingsFile,
+                             mSensor);
+
+    std::cout << "Tracker thread created!" << std::endl;
+
+
+
 
     //Initialize the Local Mapping thread and launch
     mpLocalMapper = new LocalMapping(mpMap, mSensor==MONOCULAR);
     mptLocalMapping = new thread(&ORB_SLAM2::LocalMapping::Run,mpLocalMapper);
+    std::cout << "Local mapping thread created!" << std::endl;
+
 
     //Initialize the Loop Closing thread and launch
     mpLoopCloser = new LoopClosing(mpMap, mpKeyFrameDatabase, mpVocabulary, mSensor!=MONOCULAR);
     mptLoopClosing = new thread(&ORB_SLAM2::LoopClosing::Run, mpLoopCloser);
+    std::cout << "Loop closing thread created!" << std::endl;
+
+
 
     //Initialize the Viewer thread and launch
     if(bUseViewer)
     {
-        mpViewer = new Viewer(this, mpFrameDrawer,mpMapDrawer,mpTracker,strSettingsFile);
+        cv::Size input_geometry = mpBayesianSegNet->getInputGeometry();
+        mpViewer = new Viewer(this,
+                              mpFrameDrawer,
+                              mpMapDrawer,
+                              mpTracker,
+                              strSettingsFile,
+                              input_geometry);
+
+
         mptViewer = new thread(&Viewer::Run, mpViewer);
         mpTracker->SetViewer(mpViewer);
+        std::cout << "Viewer thread created!" << std::endl;
     }
+
+
 
     //Set pointers between threads
     mpTracker->SetLocalMapper(mpLocalMapper);
@@ -111,9 +159,42 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
 
     mpLoopCloser->SetTracker(mpTracker);
     mpLoopCloser->SetLocalMapper(mpLocalMapper);
+
+    std::cout << "Thread references set!" << std::endl;
+
+
 }
 
-cv::Mat System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp)
+    /**
+    * @author: lxf
+    * @date:   20-4-14 上午11:05
+    * @description: 裁剪图像
+    * @param:
+    * @return
+    */
+    std::pair<cv::Mat, cv::Mat> System::resizeImages(const cv::Mat &imLeft,
+                                                     const cv::Mat &imRight) {
+        std::pair<cv::Mat, cv::Mat> resizedImages;
+
+        cv::Size input_geometry = mpBayesianSegNet->getInputGeometry();
+
+        // Resize image to use with bayesian segnet
+        int x_tl = imLeft.cols / 2 - input_geometry.width / 2;
+        int y_tl = imLeft.rows / 2 - input_geometry.height / 2;
+        cv::Rect roi{x_tl, y_tl, input_geometry.width, input_geometry.height};
+
+        // Crop image, and clone to ensure contiguous data.
+        imLeft(roi).copyTo(resizedImages.first);
+        imRight(roi).copyTo(resizedImages.second);
+
+        return resizedImages;
+    }
+
+
+
+cv::Mat System::TrackStereo(const cv::Mat &imLeft,
+                            const cv::Mat &imRight,
+                            const double &timestamp)
 {
     if(mSensor!=STEREO)
     {
@@ -154,12 +235,25 @@ cv::Mat System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const
         mbReset = false;
     }
     }
+    /**
+    * @author: lxf
+    * @date:   20-4-14 下午2:34
+    * @description:
+    * @param:
+    * @return
+    */
+    std::pair<cv::Mat, cv::Mat> resizedImages = resizeImages(imLeft, imRight);
+    cv::Mat Tcw = mpTracker->GrabImageStereo(resizedImages.first,
+                                             resizedImages.second,
+                                             timestamp);
 
-    cv::Mat Tcw = mpTracker->GrabImageStereo(imLeft,imRight,timestamp);
+    // cv::Mat Tcw = mpTracker->GrabImageStereo(imLeft,imRight,timestamp);
 
     unique_lock<mutex> lock2(mMutexState);
     mTrackingState = mpTracker->mState;
     mTrackedMapPoints = mpTracker->mCurrentFrame.mvpMapPoints;
+
+
     mTrackedKeyPointsUn = mpTracker->mCurrentFrame.mvKeysUn;
     return Tcw;
 }

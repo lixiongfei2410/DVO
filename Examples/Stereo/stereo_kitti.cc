@@ -17,7 +17,9 @@
 * You should have received a copy of the GNU General Public License
 * along with ORB-SLAM2. If not, see <http://www.gnu.org/licenses/>.
 */
-
+#include <cstdio>
+#include <cstdlib>
+#include <unistd.h>
 
 #include<iostream>
 #include<algorithm>
@@ -33,12 +35,19 @@ using namespace std;
 
 void LoadImages(const string &strPathToSequence, vector<string> &vstrImageLeft,
                 vector<string> &vstrImageRight, vector<double> &vTimestamps);
-
+/*
+ * 输入 :
+ *      词袋模型
+ *      内参配置文件
+ *      网络结构
+ *      训练权重
+ *      数据集
+ * */
 int main(int argc, char **argv)
 {
-    if(argc != 4)
+    if(argc != 6)
     {
-        cerr << endl << "Usage: ./stereo_kitti path_to_vocabulary path_to_settings path_to_sequence" << endl;
+        cerr << endl << "Usage: ./stereo_kitti path_to_vocabulary path_to_settings path_to_protxt_file  path_to_caffemodel_file  path_to_sequence" << endl;
         return 1;
     }
 
@@ -46,12 +55,16 @@ int main(int argc, char **argv)
     vector<string> vstrImageLeft;
     vector<string> vstrImageRight;
     vector<double> vTimestamps;
-    LoadImages(string(argv[3]), vstrImageLeft, vstrImageRight, vTimestamps);
+    LoadImages(string(argv[5]), vstrImageLeft, vstrImageRight, vTimestamps);
 
     const int nImages = vstrImageLeft.size();
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
-    ORB_SLAM2::System SLAM(argv[1],argv[2],ORB_SLAM2::System::STEREO,true);
+  //  ORB_SLAM2::System SLAM(argv[1],argv[2],ORB_SLAM2::System::STEREO,true);
+
+    //重载system
+    ORB_SLAM2::System SLAM(argv[1],argv[2],argv[3],argv[4],ORB_SLAM2::System::STEREO,true);
+
 
     // Vector for tracking time statistics
     vector<float> vTimesTrack;
@@ -146,7 +159,7 @@ void LoadImages(const string &strPathToSequence, vector<string> &vstrImageLeft,
             vTimestamps.push_back(t);
         }
     }
-
+/*---------------------------根据数据集改格式---lxf--------------------------------*/
     string strPrefixLeft = strPathToSequence + "/image_0/";
     string strPrefixRight = strPathToSequence + "/image_1/";
 
