@@ -6,4 +6,4 @@ Thirdparty/DBoW2/build/
 Thirdparty/g2o/build/
 segnet_config/
 .idea/*
-
+lib/*.so
