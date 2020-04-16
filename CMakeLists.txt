@@ -115,7 +115,9 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/Stereo)
 
 add_executable(stereo_kitti
 Examples/Stereo/stereo_kitti.cc)
-target_link_libraries(stereo_kitti ${PROJECT_NAME} ${Boost_LIBRARIES})
+target_link_libraries(stereo_kitti ${PROJECT_NAME}
+        ${PROJECT_SOURCE_DIR}/lib/libbayesian_segnet.so
+        ${Boost_LIBRARIES})
 
 #add_executable(stereo_euroc
 #Examples/Stereo/stereo_euroc.cc)

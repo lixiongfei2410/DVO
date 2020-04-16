@@ -337,8 +337,9 @@ cv::Mat Tracking::GrabImageStereo(const cv::Mat &imRectLeft,
             cvtColor(imGrayRight,imGrayRight,CV_BGRA2GRAY);
         }
     }
+// start
 
-    mCurrentFrame = Frame(mImGray,imGrayRight,timestamp,mpORBextractorLeft,mpORBextractorRight,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth);
+    mCurrentFrame = Frame(imRectLeft,mImGray,imGrayRight,timestamp,mpORBextractorLeft,mpORBextractorRight,mpORBVocabulary,mpBayesianSegNet,mK,mDistCoef,mbf,mThDepth);
 
     Track();
 

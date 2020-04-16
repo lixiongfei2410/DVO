@@ -38,6 +38,7 @@ Frame::Frame()
 //Copy Constructor
 Frame::Frame(const Frame &frame)
     :mpORBvocabulary(frame.mpORBvocabulary), mpORBextractorLeft(frame.mpORBextractorLeft), mpORBextractorRight(frame.mpORBextractorRight),
+     mpBayesianSegNet(frame.mpBayesianSegNet),
      mTimeStamp(frame.mTimeStamp), mK(frame.mK.clone()), mDistCoef(frame.mDistCoef.clone()),
      mbf(frame.mbf), mb(frame.mb), mThDepth(frame.mThDepth), N(frame.N), mvKeys(frame.mvKeys),
      mvKeysRight(frame.mvKeysRight), mvKeysUn(frame.mvKeysUn),  mvuRight(frame.mvuRight),
@@ -58,9 +59,28 @@ Frame::Frame(const Frame &frame)
 }
 
 
-Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeStamp, ORBextractor* extractorLeft, ORBextractor* extractorRight, ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth)
-    :mpORBvocabulary(voc),mpORBextractorLeft(extractorLeft),mpORBextractorRight(extractorRight), mTimeStamp(timeStamp), mK(K.clone()),mDistCoef(distCoef.clone()), mbf(bf), mThDepth(thDepth),
-     mpReferenceKF(static_cast<KeyFrame*>(NULL))
+Frame::Frame(const cv::Mat &mIcolour,
+        const cv::Mat &imLeft,
+        const cv::Mat &imRight,
+        const double &timeStamp,
+        ORBextractor* extractorLeft,
+        ORBextractor* extractorRight,
+        ORBVocabulary* voc,
+        BayesianSegNet *pBayesianSegNet,
+        cv::Mat &K,
+        cv::Mat &distCoef,
+        const float &bf,
+        const float &thDepth)
+    :mpORBvocabulary(voc),
+    mpORBextractorLeft(extractorLeft),
+    mpORBextractorRight(extractorRight),
+    mpBayesianSegNet(pBayesianSegNet),
+    mTimeStamp(timeStamp),
+    mK(K.clone()),
+    mDistCoef(distCoef.clone()),
+    mbf(bf),
+    mThDepth(thDepth),
+    mpReferenceKF(static_cast<KeyFrame*>(NULL))
 {
     // Frame ID
     mnId=nNextId++;
@@ -74,6 +94,9 @@ Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeSt
     mvLevelSigma2 = mpORBextractorLeft->GetScaleSigmaSquares();
     mvInvLevelSigma2 = mpORBextractorLeft->GetInverseScaleSigmaSquares();
 
+    //分割图像
+    SegmentImage(mIcolour);
+
     // ORB extraction
     thread threadLeft(&Frame::ExtractORB,this,0,imLeft);
     thread threadRight(&Frame::ExtractORB,this,1,imRight);
@@ -84,6 +107,18 @@ Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeSt
 
     if(mvKeys.empty())
         return;
+    else {
+        SelectSemanticKeys();
+
+        if (mvKeysSemantic.empty()) {
+            return;
+        }
+    }
+    Nsemantic = mvKeysSemantic.size();
+
+    std::cout << "OriginFeaturesNums : " << N << std::endl;
+    std::cout << "StaticFeaturesNums : " << Nsemantic << std::endl;
+
 
     UndistortKeyPoints();
 
@@ -225,6 +260,51 @@ Frame::Frame(const cv::Mat &imGray, const double &timeStamp, ORBextractor* extra
     mb = mbf/fx;
 
     AssignFeaturesToGrid();
+}
+
+
+void Frame::SegmentImage(const cv::Mat &im) {
+    MatXu classes;
+    MatXd confidence;
+    MatXd entropy;
+
+    mpBayesianSegNet->segmentImage(im, classes, confidence, entropy);
+
+    mClasses = classes;
+
+    // Generate overlaid semantic image
+    mImSemantic = mpBayesianSegNet->generateSegmentedImage(classes, im);
+}
+cv::Mat Frame::getSegmentedImage() {
+    return mImSemantic.clone();
+}
+
+void Frame::SelectSemanticKeys() {
+    // ORB_SLAM2's tracking looks at the total number of detected keypoints.
+    // Instead, it should look at the number of potential keys that are from the
+    // accepted static classes.
+    for (size_t i = 0; i < mvKeys.size(); ++i) {
+        // Get keypoint coordinate
+        auto col = static_cast<int>(mvKeys.at(i).pt.x);
+        auto row = static_cast<int>(mvKeys.at(i).pt.y);
+
+        // Determine class
+        auto detection = static_cast<Classes>(mClasses(row, col));
+
+        // If detection is deemed to be a static object
+        if (detection <= Classes::TERRAIN) {
+            // Save keypoints and descriptors
+            mvKeysSemantic.emplace_back(mvKeys.at(i));
+
+            if (mDescriptorsSemantic.empty()) {
+                mDescriptorsSemantic =
+                        mDescriptors.row(static_cast<int>(i));
+            } else {
+                mDescriptorsSemantic.push_back(
+                        mDescriptors.row(static_cast<int>(i)));
+            }
+        }
+    }
 }
 
 void Frame::AssignFeaturesToGrid()

@@ -22,7 +22,7 @@
 #define FRAME_H
 
 #include<vector>
-
+#include<iostream >
 #include "MapPoint.h"
 #include "Thirdparty/DBoW2/DBoW2/BowVector.h"
 #include "Thirdparty/DBoW2/DBoW2/FeatureVector.h"
@@ -31,7 +31,7 @@
 #include "ORBextractor.h"
 
 #include <opencv2/opencv.hpp>
-
+#include "bayesian_segnet.hpp"
 namespace ORB_SLAM2
 {
 #define FRAME_GRID_ROWS 48
@@ -49,7 +49,18 @@ public:
     Frame(const Frame &frame);
 
     // Constructor for stereo cameras.
-    Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeStamp, ORBextractor* extractorLeft, ORBextractor* extractorRight, ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth);
+    Frame(const cv::Mat &mIcolour,
+            const cv::Mat &imLeft,
+            const cv::Mat &imRight,
+            const double &timeStamp,
+            ORBextractor* extractorLeft,
+            ORBextractor* extractorRight,
+            ORBVocabulary* voc,
+            BayesianSegNet *pBayesianSegNet,
+            cv::Mat &K,
+            cv::Mat &distCoef,
+            const float &bf,
+            const float &thDepth);
 
     // Constructor for RGB-D cameras.
     Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const double &timeStamp, ORBextractor* extractor,ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth);
@@ -105,6 +116,8 @@ public:
     // Feature extractor. The right is used only in the stereo case.
     ORBextractor* mpORBextractorLeft, *mpORBextractorRight;
 
+    BayesianSegNet *mpBayesianSegNet;
+
     // Frame timestamp.
     double mTimeStamp;
 
@@ -130,6 +143,7 @@ public:
 
     // Number of KeyPoints.
     int N;
+    int Nsemantic;
 
     // Vector of keypoints (original for visualization) and undistorted (actually used by the system).
     // In the stereo case, mvKeysUn is redundant as images must be rectified.
@@ -187,6 +201,21 @@ public:
 
     static bool mbInitialComputations;
 
+    /**
+    * @author: lxf
+    * @date:   20-4-16 上午9:51
+    * @description:
+    * @param: 
+    * @return 
+    */
+    cv::Mat mImSemantic;
+    MatXu mClasses;
+    std::vector<cv::KeyPoint> mvKeysSemantic;
+    cv::Mat mDescriptorsSemantic;//属于动态点的特征点的描述子
+
+    cv::Mat getSegmentedImage();
+    void SegmentImage(const cv::Mat &im);
+    void SelectSemanticKeys();
 
 private:
 
