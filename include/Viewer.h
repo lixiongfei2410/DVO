@@ -26,7 +26,7 @@
 #include "MapDrawer.h"
 #include "Tracking.h"
 #include "System.h"
-
+#include "bayesian_segnet.hpp"
 #include <mutex>
 
 namespace ORB_SLAM2

@@ -116,9 +116,16 @@ Frame::Frame(const cv::Mat &mIcolour,
     }
     Nsemantic = mvKeysSemantic.size();
 
-    std::cout << "OriginFeaturesNums : " << N << std::endl;
+    std::cout << std::endl << "OriginFeaturesNums : " << N << std::endl;
     std::cout << "StaticFeaturesNums : " << Nsemantic << std::endl;
-
+    //TODO : save feature picture
+    cv::Mat  color = mIcolour;
+    SavePicture("/home/er/Desktop/DVO/pic_feature/all",color);
+    SaveStaticPicture("/home/er/Desktop/DVO/pic_feature/static", color);
+   // mvKeys = mvKeysSemantic;
+    // mDescriptors = mDescriptorsSemantic ;
+    // TODO : save semantic picture
+  //  SavePicture("/home/er/Desktop/DVO/pic_feature/static", color);
 
     UndistortKeyPoints();
 
@@ -274,6 +281,7 @@ void Frame::SegmentImage(const cv::Mat &im) {
 
     // Generate overlaid semantic image
     mImSemantic = mpBayesianSegNet->generateSegmentedImage(classes, im);
+    cv::imshow("SemanticPicture",mImSemantic);
 }
 cv::Mat Frame::getSegmentedImage() {
     return mImSemantic.clone();
@@ -306,6 +314,33 @@ void Frame::SelectSemanticKeys() {
         }
     }
 }
+
+void Frame::SavePicture(string path_to_pic,cv::Mat &im)
+{
+    if(mnId%2!=0)
+    {
+        cv::Mat temppic;
+        cv::drawKeypoints(im,mvKeys,temppic,cv::Scalar(0,0,255),cv::DrawMatchesFlags::DEFAULT) ;
+        string path = path_to_pic + cv::format("/%d.jpg",mnId/2);
+        cv::imshow("AllFeatures",temppic);
+        cv::imwrite(path,temppic);
+    }
+
+}
+
+void Frame::SaveStaticPicture(string path_to_pic,cv::Mat &im)
+{
+    if(mnId%2!=0)
+    {
+        cv::Mat temppic;
+        cv::drawKeypoints(im,mvKeysSemantic,temppic,cv::Scalar(0,0,255),cv::DrawMatchesFlags::DEFAULT) ;
+        string path = path_to_pic + cv::format("/%d.jpg",mnId/2);
+        cv::imshow("StaticFeatures",temppic);
+        cv::imwrite(path,temppic);
+    }
+
+}
+
 
 void Frame::AssignFeaturesToGrid()
 {

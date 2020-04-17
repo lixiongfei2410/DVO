@@ -7,3 +7,4 @@ Thirdparty/g2o/build/
 segnet_config/
 .idea/*
 lib/*.so
+pic_feature/

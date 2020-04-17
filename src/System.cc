@@ -101,6 +101,9 @@ System::System(const string &strVocFile,
     mpFrameDrawer = new FrameDrawer(mpMap);
     mpMapDrawer = new MapDrawer(mpMap, strSettingsFile);
 
+
+    BayesianSegNetParams params{strPrototxtFile, strWeightsFile};
+    mpBayesianSegNet = new BayesianSegNet(params);
     //Initialize the Tracking thread
     //(it will live in the main thread of execution, the one that called this constructor)
     mpTracker = new Tracking(this,

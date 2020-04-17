@@ -22,7 +22,7 @@
 #define FRAME_H
 
 #include<vector>
-#include<iostream >
+#include<iostream>
 #include "MapPoint.h"
 #include "Thirdparty/DBoW2/DBoW2/BowVector.h"
 #include "Thirdparty/DBoW2/DBoW2/FeatureVector.h"
@@ -49,7 +49,7 @@ public:
     Frame(const Frame &frame);
 
     // Constructor for stereo cameras.
-    Frame(const cv::Mat &mIcolour,
+    Frame( const cv::Mat &mIcolour,
             const cv::Mat &imLeft,
             const cv::Mat &imRight,
             const double &timeStamp,
@@ -216,6 +216,8 @@ public:
     cv::Mat getSegmentedImage();
     void SegmentImage(const cv::Mat &im);
     void SelectSemanticKeys();
+    void SavePicture(string path_to_pic,cv::Mat &im);
+    void SaveStaticPicture(string path_to_pic,cv::Mat &im);
 
 private:
 
