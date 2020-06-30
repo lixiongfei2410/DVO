@@ -36,6 +36,18 @@ class Map;
 class Frame;
 
 
+class VelSmoother
+{
+public:
+    VelSmoother();
+    float getMeanSpeed();
+    void addVelocity(cv::Mat vel);
+    static const int VECTORMAXSIZE = 10;
+// private:
+    cv::Mat meanVelocity;
+    deque<cv::Mat> velocities;
+};
+
 class MapPoint
 {
 public:
@@ -88,6 +100,8 @@ public:
     long int mnFirstFrame;
     int nObs;
 
+
+    VelSmoother velSmoother;
     // Variables used by the tracking
     float mTrackProjX;
     float mTrackProjY;

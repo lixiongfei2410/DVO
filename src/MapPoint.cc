@@ -23,8 +23,35 @@
 
 #include<mutex>
 
+
+
 namespace ORB_SLAM2
 {
+
+VelSmoother::VelSmoother() : meanVelocity(cv::Mat::zeros(3, 1, CV_32F)){}
+
+float VelSmoother::getMeanSpeed()
+{
+    return sqrt(meanVelocity.at<float>(0)*meanVelocity.at<float>(0) + meanVelocity.at<float>(1)*meanVelocity.at<float>(1) + meanVelocity.at<float>(2)*meanVelocity.at<float>(2));
+}
+
+void VelSmoother::addVelocity(cv::Mat vel)
+{
+    if(velocities.size() < VECTORMAXSIZE)
+    {
+        meanVelocity = (meanVelocity * velocities.size() + vel) / (velocities.size() + 1);
+        velocities.push_front(vel);
+    }
+    else
+    {
+        meanVelocity -= velocities.back() / VECTORMAXSIZE;
+        meanVelocity += vel / VECTORMAXSIZE;
+        velocities.pop_back();
+        velocities.push_front(vel);
+    }
+}
+
+
 
 long unsigned int MapPoint::nNextId=0;
 mutex MapPoint::mGlobalMutex;

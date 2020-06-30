@@ -32,7 +32,7 @@
 
 namespace ORB_SLAM2
 {
-
+//构造函数
 System::System(const string &strVocFile,
                const string &strSettingsFile,
                const string &strPrototxtFile,
@@ -68,7 +68,7 @@ System::System(const string &strVocFile,
 
 
     //Check settings file
-    cv::FileStorage fsSettings(strSettingsFile.c_str(), cv::FileStorage::READ);
+    cv::FileStorage fsSettings(strSettingsFile.c_str(), cv::FileStorage::READ); //yaml 文件读写方式
     if(!fsSettings.isOpened())
     {
        cerr << "Failed to open settings file at: " << strSettingsFile << endl;
@@ -104,8 +104,12 @@ System::System(const string &strVocFile,
 
     BayesianSegNetParams params{strPrototxtFile, strWeightsFile};
     mpBayesianSegNet = new BayesianSegNet(params);
+
+
+
     //Initialize the Tracking thread
     //(it will live in the main thread of execution, the one that called this constructor)
+    // 加载一些相机 的参数
     mpTracker = new Tracking(this,
                              mpVocabulary,
                              mpFrameDrawer,
@@ -122,7 +126,7 @@ System::System(const string &strVocFile,
 
 
     //Initialize the Local Mapping thread and launch
-    mpLocalMapper = new LocalMapping(mpMap, mSensor==MONOCULAR);
+    mpLocalMapper = new LocalMapping(mpMap, mSensor==MONOCULAR);//创建局部建图对象
     mptLocalMapping = new thread(&ORB_SLAM2::LocalMapping::Run,mpLocalMapper);
     std::cout << "Local mapping thread created!" << std::endl;
 
@@ -194,7 +198,7 @@ System::System(const string &strVocFile,
     }
 
 
-
+// 每一帧图像
 cv::Mat System::TrackStereo(const cv::Mat &imLeft,
                             const cv::Mat &imRight,
                             const double &timestamp)
@@ -245,7 +249,7 @@ cv::Mat System::TrackStereo(const cv::Mat &imLeft,
     * @param:
     * @return
     */
-    std::pair<cv::Mat, cv::Mat> resizedImages = resizeImages(imLeft, imRight);
+    std::pair<cv::Mat, cv::Mat> resizedImages = resizeImages(imLeft, imRight);// height width 376*1241 -->352*1024
     cv::Mat Tcw = mpTracker->GrabImageStereo(resizedImages.first,
                                              resizedImages.second,
                                              timestamp);

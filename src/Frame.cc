@@ -59,6 +59,8 @@ Frame::Frame(const Frame &frame)
 }
 
 
+// 加入了分割 的slam
+
 Frame::Frame(const cv::Mat &mIcolour,
         const cv::Mat &imLeft,
         const cv::Mat &imRight,
@@ -97,13 +99,35 @@ Frame::Frame(const cv::Mat &mIcolour,
     //分割图像
     SegmentImage(mIcolour);
 
-    // ORB extraction
+    // ORB extraction mvKeys
     thread threadLeft(&Frame::ExtractORB,this,0,imLeft);
     thread threadRight(&Frame::ExtractORB,this,1,imRight);
     threadLeft.join();
     threadRight.join();
 
-    N = mvKeys.size();
+  /*  std::vector<cv::KeyPoint> _mvKeys;
+    cv::Mat _mDescriptors;
+    for(size_t i=0;i<mvKeys.size();i++){
+        int mx = static_cast<int>(mvKeys.at(i).pt.x);
+        int my = static_cast<int>(mvKeys.at(i).pt.y);
+        auto PointClass = static_cast<Classes>(mClasses(my,mx));
+        if(PointClass <= Classes::TERRAIN)
+            continue;
+        else{
+            _mvKeys.push_back(mvKeys[i]);
+            _mDescriptors.push_back(mDescriptors.row(i));
+        }
+
+
+    }
+
+    mvKeys = _mvKeys;
+    mDescriptors = _mDescriptors;
+    */
+
+
+
+    //std::cout << N <<endl;
 
     if(mvKeys.empty())
         return;
@@ -114,23 +138,33 @@ Frame::Frame(const cv::Mat &mIcolour,
             return;
         }
     }
+
+
+    mvKeys =mvKeysSemantic;
+    mDescriptors = mDescriptorsSemantic;
+
     Nsemantic = mvKeysSemantic.size();
+    N = mvKeys.size(); // 提取的特征点数量
 
     std::cout << std::endl << "OriginFeaturesNums : " << N << std::endl;
     std::cout << "StaticFeaturesNums : " << Nsemantic << std::endl;
     //TODO : save feature picture
     cv::Mat  color = mIcolour;
-    SavePicture("/home/er/Desktop/DVO/pic_feature/all",color);
-    SaveStaticPicture("/home/er/Desktop/DVO/pic_feature/static", color);
-   // mvKeys = mvKeysSemantic;
+   // SavePicture("/home/er/Desktop/DVO/pic_feature/all",color);
+   // SaveStaticPicture("/home/er/Desktop/DVO/pic_feature/static", color);
+    //mvKeys = mvKeysSemantic;
     // mDescriptors = mDescriptorsSemantic ;
     // TODO : save semantic picture
   //  SavePicture("/home/er/Desktop/DVO/pic_feature/static", color);
 
-    UndistortKeyPoints();
+    UndistortKeyPoints(); // 去畸变
 
+    // 计算双目间的匹配, 匹配成功的特征点会计算其深度
+    // 深度存放在mvuRight 和 mvDepth 中
     ComputeStereoMatches();
 
+
+    // 对应的mappoints
     mvpMapPoints = vector<MapPoint*>(N,static_cast<MapPoint*>(NULL));    
     mvbOutlier = vector<bool>(N,false);
 
@@ -320,7 +354,7 @@ void Frame::SavePicture(string path_to_pic,cv::Mat &im)
     if(mnId%2!=0)
     {
         cv::Mat temppic;
-        cv::drawKeypoints(im,mvKeys,temppic,cv::Scalar(0,0,255),cv::DrawMatchesFlags::DEFAULT) ;
+        cv::drawKeypoints(im,mvKeys,temppic,cv::Scalar(0,0,255),cv::DrawMatchesFlags::DEFAULT);
         string path = path_to_pic + cv::format("/%d.jpg",mnId/2);
         cv::imshow("AllFeatures",temppic);
         cv::imwrite(path,temppic);

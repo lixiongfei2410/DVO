@@ -62,7 +62,7 @@ int main(int argc, char **argv)
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
   //  ORB_SLAM2::System SLAM(argv[1],argv[2],ORB_SLAM2::System::STEREO,true);
 
-    //重载system
+    //开启各个线程
     ORB_SLAM2::System SLAM(argv[1],argv[2],argv[3],argv[4],ORB_SLAM2::System::STEREO,true);
 
 
@@ -105,9 +105,9 @@ int main(int argc, char **argv)
         std::chrono::monotonic_clock::time_point t2 = std::chrono::monotonic_clock::now();
 #endif
 
-        double ttrack= std::chrono::duration_cast<std::chrono::duration<double> >(t2 - t1).count();
+        double ttrack= std::chrono::duration_cast<std::chrono::duration<double> >(t2 - t1).count(); //一帧的处理时间
 
-        vTimesTrack[ni]=ttrack;
+        vTimesTrack[ni]=ttrack; //所有帧处理的时间
 
         // Wait to load the next frame
         double T=0;
@@ -155,7 +155,7 @@ void LoadImages(const string &strPathToSequence, vector<string> &vstrImageLeft,
             stringstream ss;
             ss << s;
             double t;
-            ss >> t;
+            ss >> t;     //格式转换
             vTimestamps.push_back(t);
         }
     }
@@ -172,6 +172,6 @@ void LoadImages(const string &strPathToSequence, vector<string> &vstrImageLeft,
         stringstream ss;
         ss << setfill('0') << setw(6) << i;
         vstrImageLeft[i] = strPrefixLeft + ss.str() + ".png";
-        vstrImageRight[i] = strPrefixRight + ss.str() + ".png";
+        vstrImageRight[i] = strPrefixRight + ss.str() + ".png";  //数据格式 000013.png
     }
 }

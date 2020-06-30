@@ -261,7 +261,7 @@ Tracking::Tracking(System *pSys,
             mpORBextractorRight = new ORBextractor(nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST);
 
         if(sensor==System::MONOCULAR)
-            mpIniORBextractor = new ORBextractor(2*nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST);
+            mpIniORBextractor = new ORBextractor(2*nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST);//如果是单目,采集两倍
 
         cout << endl  << "ORB Extractor Parameters: " << endl;
         cout << "- Number of Features: " << nFeatures << endl;
@@ -309,7 +309,7 @@ cv::Mat Tracking::GrabImageStereo(const cv::Mat &imRectLeft,
                                   const double &timestamp)
 {
     mImGray = imRectLeft;
-    cv::Mat imGrayRight = imRectRight;
+    cv::Mat imGrayRight = imRectRight;//浅拷贝
 
     if(mImGray.channels()==3)
     {
@@ -340,10 +340,14 @@ cv::Mat Tracking::GrabImageStereo(const cv::Mat &imRectLeft,
 // start
 
     mCurrentFrame = Frame(imRectLeft,mImGray,imGrayRight,timestamp,mpORBextractorLeft,mpORBextractorRight,mpORBVocabulary,mpBayesianSegNet,mK,mDistCoef,mbf,mThDepth);
+    // TODO:  process dynamic object
 
+
+    std::cout << "start Tracking" << endl;
     Track();
+    std::cout << "end Tracking " << endl;
 
-    return mCurrentFrame.mTcw.clone();
+    return mCurrentFrame.mTcw.clone();//深拷贝
 }
 
 
@@ -666,9 +670,11 @@ void Tracking::StereoInitialization()
         for(int i=0; i<mCurrentFrame.N;i++)
         {
             float z = mCurrentFrame.mvDepth[i];
-            if(z>0)
+            if(z>0)//
             {
                 cv::Mat x3D = mCurrentFrame.UnprojectStereo(i);
+
+
                 MapPoint* pNewMP = new MapPoint(x3D,pKFini,mpMap);
                 pNewMP->AddObservation(pKFini,i);
                 pKFini->AddMapPoint(pNewMP,i);
@@ -685,6 +691,7 @@ void Tracking::StereoInitialization()
         mpLocalMapper->InsertKeyFrame(pKFini);
 
         mLastFrame = Frame(mCurrentFrame);
+
         mnLastKeyFrameId=mCurrentFrame.mnId;
         mpLastKeyFrame = pKFini;
 
