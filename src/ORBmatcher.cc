@@ -1466,7 +1466,7 @@ int ORBmatcher::SearchByProjection(Frame &CurrentFrame, const Frame &LastFrame, 
                 x3Dc_.at<float>(2) = zc_;
                 cv::Mat x3Dw_ = Rcw.t() * (x3Dc_ - tcw);
 
-                float vel_ = sqrt(worldDist2(x3Dw, x3Dw_))/(CurrentFrame.mTimeStamp - LastFrame.mTimeStamp);
+                float vel_ = sqrt(worldDist2(x3Dw, x3Dw_/(CurrentFrame.mTimeStamp - LastFrame.mTimeStamp);
                 pMP->velSmoother.addVelocity(x3Dw_ - x3Dw);
 
                 // dynamics object velocity logger body
