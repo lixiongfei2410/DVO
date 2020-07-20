@@ -1353,7 +1353,7 @@ int ORBmatcher::SearchByProjection(Frame &CurrentFrame, const Frame &LastFrame, 
         vector<array<int, 3>> distMat;// [[1,2,3],[0,0,0]]
 
         // Rotation Histogram (to check rotation consistency)
-        vector<int> rotHist[HISTO_LENGTH];
+        vector<int> rotHist[HISTO_LENGTH]; //30
         for(int i=0;i<HISTO_LENGTH;i++)
             rotHist[i].reserve(500);
         const float factor = 1.0f/HISTO_LENGTH;
@@ -1448,6 +1448,7 @@ int ORBmatcher::SearchByProjection(Frame &CurrentFrame, const Frame &LastFrame, 
             {
                 int bestIdx = distMat[0][1];
                 int bestIdx2 = distMat[0][2];
+
                 MapPoint* pMP = LastFrame.mvpMapPoints[bestIdx];
                 cv::Mat x3Dw = pMP->GetWorldPos();
                 cv::Mat x3Dc = Rcw*x3Dw+tcw;
@@ -1466,7 +1467,7 @@ int ORBmatcher::SearchByProjection(Frame &CurrentFrame, const Frame &LastFrame, 
                 x3Dc_.at<float>(2) = zc_;
                 cv::Mat x3Dw_ = Rcw.t() * (x3Dc_ - tcw);
 
-                float vel_ = sqrt(worldDist2(x3Dw, x3Dw_/(CurrentFrame.mTimeStamp - LastFrame.mTimeStamp);
+                float vel_ = sqrt(worldDist2(x3Dw, x3Dw_))/(CurrentFrame.mTimeStamp - LastFrame.mTimeStamp);
                 pMP->velSmoother.addVelocity(x3Dw_ - x3Dw);
 
                 // dynamics object velocity logger body
@@ -1479,7 +1480,7 @@ int ORBmatcher::SearchByProjection(Frame &CurrentFrame, const Frame &LastFrame, 
                 // select static points
                 vel_ = pMP->velSmoother.getMeanSpeed();
 
-                if((vel_ < 5.0) || (nmatches < minMatches))
+                if((vel_ < 20.0) || (nmatches < minMatches))
                 {
 
                     CurrentFrame.mvpMapPoints[bestIdx2]=pMP;

@@ -562,7 +562,7 @@ void Tracking::Track()
             mState=LOST;
 
         // Update drawer
-        mpFrameDrawer->Update(this);
+        mpFrameDrawer->Update(this); // 更新图像显示
 
         // If tracking were good, check if we insert a keyframe
         if(bOK)

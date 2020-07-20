@@ -146,8 +146,8 @@ Frame::Frame(const cv::Mat &mIcolour,
     Nsemantic = mvKeysSemantic.size();
     N = mvKeys.size(); // 提取的特征点数量
 
-    std::cout << std::endl << "OriginFeaturesNums : " << N << std::endl;
-    std::cout << "StaticFeaturesNums : " << Nsemantic << std::endl;
+    //std::cout << std::endl << "OriginFeaturesNums : " << N << std::endl;
+  //  std::cout << "StaticFeaturesNums : " << Nsemantic << std::endl;
     //TODO : save feature picture
     cv::Mat  color = mIcolour;
    // SavePicture("/home/er/Desktop/DVO/pic_feature/all",color);
@@ -414,7 +414,7 @@ void Frame::UpdatePoseMatrices()
     mtcw = mTcw.rowRange(0,3).col(3);
     mOw = -mRcw.t()*mtcw;
 }
-
+// 这个函数中有一个不懂的地方,就是判断 地图点的视角
 bool Frame::isInFrustum(MapPoint *pMP, float viewingCosLimit)
 {
     pMP->mbTrackInView = false;
