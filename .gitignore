@@ -8,3 +8,4 @@ segnet_config/
 .idea/*
 lib/*.so
 pic_feature/
+CameraTrajectory.txt
