@@ -130,12 +130,12 @@ void MapPoint::AddObservation(KeyFrame* pKF, size_t idx)
     mObservations[pKF]=idx;
 
     if(pKF->mvuRight[idx]>=0)
-        nObs+=2;
+        nObs+=2; // 记录被观测的次数
     else
         nObs++;
 }
 
-void MapPoint::EraseObservation(KeyFrame* pKF)
+void MapPoint::EraseObservation(KeyFrame* pKF) // 删除关键帧观测关系
 {
     bool bBad=false;
     {
@@ -160,7 +160,7 @@ void MapPoint::EraseObservation(KeyFrame* pKF)
     }
 
     if(bBad)
-        SetBadFlag();
+        SetBadFlag(); // 删除地图点,删除地图点，并清除关键帧和地图中所有和该地图点对应的关联关系
 }
 
 map<KeyFrame*, size_t> MapPoint::GetObservations()

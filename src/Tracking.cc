@@ -342,7 +342,6 @@ cv::Mat Tracking::GrabImageStereo(const cv::Mat &imRectLeft,
     mCurrentFrame = Frame(imRectLeft,mImGray,imGrayRight,timestamp,mpORBextractorLeft,mpORBextractorRight,mpORBVocabulary,mpBayesianSegNet,mK,mDistCoef,mbf,mThDepth);
     // TODO:  process dynamic object
 
-
     std::cout << "start Tracking" << endl;
     Track();
     std::cout << "end Tracking " << endl;
@@ -426,7 +425,7 @@ void Tracking::Track()
     if(mState==NOT_INITIALIZED)
     {
         if(mSensor==System::STEREO || mSensor==System::RGBD)
-            StereoInitialization();
+            StereoInitialization(); // 设置初始坐标(世界坐标),将第一帧设为关键帧
         else
             MonocularInitialization();
 
@@ -562,7 +561,7 @@ void Tracking::Track()
             mState=LOST;
 
         // Update drawer
-        mpFrameDrawer->Update(this); // 更新图像显示
+        mpFrameDrawer->Update(this); // 更新图像显示,如果选中的地图点有些被删除了,在这帧图像中也不会显示特征点
 
         // If tracking were good, check if we insert a keyframe
         if(bOK)
@@ -592,7 +591,7 @@ void Tracking::Track()
                     }
             }
 
-            // Delete temporal MapPoints
+            // Delete temporal MapPoints 删除临时地图点
             for(list<MapPoint*>::iterator lit = mlpTemporalPoints.begin(), lend =  mlpTemporalPoints.end(); lit!=lend; lit++)
             {
                 MapPoint* pMP = *lit;
@@ -1046,7 +1045,11 @@ bool Tracking::TrackWithMotionModel()
 
     // Optimize frame pose with all matches
     Optimizer::PoseOptimization(&mCurrentFrame);
-
+/*
+    for(int i=0;i<mCurrentFrame.N;i++){
+        mCurrentFrame.mvbOutlier[i] =true;
+    }
+*/
     // Discard outliers
     int nmatchesMap = 0;
     for(int i =0; i<mCurrentFrame.N; i++)
