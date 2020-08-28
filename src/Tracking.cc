@@ -1031,7 +1031,7 @@ bool Tracking::TrackWithMotionModel()
         th=15;
     else
         th=7;
-    int nmatches = matcher.SearchByProjection(mCurrentFrame,mLastFrame,th,mSensor==System::MONOCULAR);
+    int nmatches = matcher.SearchByProjection(mCurrentFrame,mLastFrame,th,mSensor==System::MONOCULAR);  // found  matchers  lxf
 
     // If few matches, uses a wider window search
     if(nmatches<20)

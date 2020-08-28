@@ -51,6 +51,7 @@ public:
     // Used to track from previous frame (Tracking)
     int SearchByProjection1(Frame &CurrentFrame, const Frame &LastFrame, const float th, const bool bMono);
     int SearchByProjection(Frame &CurrentFrame, const Frame &LastFrame, const float th, const bool bMono);
+    int SearchByProjection2(Frame &CurrentFrame, const Frame &LastFrame, const float th, const bool bMono);
 
     // Project MapPoints seen in KeyFrame into the Frame and search matches.
     // Used in relocalisation (Tracking)
